@@ -4,8 +4,15 @@
 Home
 {% endblock %}
 
+
 {% block content %}
 <h1>{{athenaTest}}Home Page</h1>
+
+{% if graph %}
+{{ graph|safe }}
+{% else %}
+<p>No graph was provided.</p>
+{% endif %}
 
 
 {% endblock %}
