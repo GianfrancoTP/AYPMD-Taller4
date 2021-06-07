@@ -6,10 +6,38 @@ Home
 
 
 {% block content %}
-<h1>Price depending on bedroom amount by city.</h1>
+<h1>Price depending on amount of bedrooms.</h1>
 
-{% if graph %}
-{{ graph|safe }}
+{% if graph1 %}
+{{ graph1|safe }}
+{% else %}
+<p>No graph was provided.</p>
+{% endif %}
+
+<h1>Percentage of homestays by city.</h1>
+{% if graph2 %}
+{{ graph2|safe }}
+{% else %}
+<p>No graph was provided.</p>
+{% endif %}
+
+<h1>Listed homestays by month.</h1>
+{% if graph3 %}
+{{ graph3|safe }}
+{% else %}
+<p>No graph was provided.</p>
+{% endif %}
+
+<h1>Price by bedrooms and bathrooms.</h1>
+{% if graph4 %}
+{{ graph4|safe }}
+{% else %}
+<p>No graph was provided.</p>
+{% endif %}
+
+<h1>Average price by month.</h1>
+{% if graph5 %}
+{{ graph5|safe }}
 {% else %}
 <p>No graph was provided.</p>
 {% endif %}
