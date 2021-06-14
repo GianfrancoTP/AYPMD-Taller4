@@ -65,58 +65,57 @@ def athenaRequest(query):
 def home(response):
     
     #first graph (precio segun dormitorio y pais)
-    athena_response = athenaRequest('SELECT "bedrooms", AVG(NULLIF("price", 0) ) as "price" FROM "dataframe_parquet" GROUP BY "bedrooms" ORDER BY "bedrooms"')
+    athena_response = athenaRequest('SELECT "bedrooms", AVG(NULLIF("avg_price", 0) ) as price,"city" FROM "dataframe_parquet" WHERE "bedrooms"<=10 GROUP BY "bedrooms","city" ORDER BY "bedrooms"')
     df = pd.DataFrame(results_to_df(athena_response))
     df["price"] = pd.to_numeric(df["price"])
     df["bedrooms"] = pd.to_numeric(df["bedrooms"])
-    df["bedrooms"] = df["bedrooms"]*50
-    df["country"] = df.apply(lambda x: randomCountry(), axis=1);
-    fig = px.line(df, x="bedrooms", y="price", color='country')
+    #df["city"] = df.apply(lambda x: randomCountry(), axis=1);
+    fig = px.line(df, x="bedrooms", y="price", color="city")
     graph1 = plotly.io.to_html(fig)
     
     #second graph (pie chart amount of homestays by country) despues hay que cambiar el query POR AHORA ES DUMMY
-    athena_response = athenaRequest('SELECT COUNT("price") as price FROM "dataframe_parquet" GROUP BY "price"')
-    df = pd.DataFrame(results_to_df(athena_response))
-    df["price"] = pd.to_numeric(df["price"])
-    df["country"] = df.apply(lambda x: randomCountry(), axis=1);
-    df.loc[df['price'] < 1000, 'country'] = 'Other countries' # Represent only large countries
-    fig = px.pie(df, values='price', names='country', title='Homestays by city')
+    athena_response = athenaRequest('SELECT COUNT("city") as total,"city","month" FROM "dataframe_parquet" GROUP BY "city","month"')
+    df2 = pd.DataFrame(results_to_df(athena_response))
+    fig = px.pie(df2, values='total', names='city', title='Homestays by city')
     graph2 = plotly.io.to_html(fig)
     
+
     #third graph (histogram) dummy query
-    df["month"] = df.apply(lambda x: randomMonth(), axis=1);
-    fig = px.histogram(df, x="month", color="country", # can be `box`, `violin`
-                             )#hover_data=df.columns)
+    athena_response = athenaRequest('SELECT COUNT("city") as total,"city","month" FROM "dataframe_parquet" GROUP BY "city","month"')
+    df3 = pd.DataFrame(results_to_df(athena_response))
+    fig = px.histogram(df3, y="total", x="month", color="city", # can be `box`, `violin`
+                             )#hover_data=df3.columns)
     graph3 = plotly.io.to_html(fig)
     
+
     #fourth graph
-    athena_response = athenaRequest('SELECT "bedrooms","bathrooms", AVG(NULLIF("price", 0) ) as "price" FROM "dataframe_parquet" GROUP BY "bedrooms","bathrooms"')
-    df2 = pd.DataFrame(results_to_df(athena_response))
-    df2["price"] = pd.to_numeric(df2["price"])
-    df2["bedrooms"] = pd.to_numeric(df2["bedrooms"])
-    df2["bedrooms"] = df2["bedrooms"]*50
-    df2["bathrooms"] = pd.to_numeric(df2["bathrooms"])
-    df2["bathrooms"] = df2["bathrooms"]*333
-    df2 = df2[df2.bathrooms<30]
-    df2 = df2[df2.bedrooms<30]
-    df2["country"] = df2.apply(lambda x: randomCountry(), axis=1);
-    fig = px.scatter_3d(df2, x='bathrooms', y='bedrooms', z='price',
-                  color='country')
+    athena_response = athenaRequest('SELECT "city","bedrooms","bathrooms", AVG(NULLIF("avg_price", 0) ) as price FROM "dataframe_parquet" GROUP BY "bedrooms","bathrooms","city"')
+    df4 = pd.DataFrame(results_to_df(athena_response))
+    df4["price"] = pd.to_numeric(df4["price"])
+    df4["bedrooms"] = pd.to_numeric(df4["bedrooms"])
+    df4["bedrooms"] = df4["bedrooms"]
+    df4["bathrooms"] = pd.to_numeric(df4["bathrooms"])
+    df4["bathrooms"] = df4["bathrooms"]
+    df4 = df4[df4.bathrooms<30]
+    df4 = df4[df4.bedrooms<30]
+    fig = px.scatter_3d(df4, x='bathrooms', y='bedrooms', z='price',
+                  color='city')
     graph4 = plotly.io.to_html(fig)
     
+    
     #fifth graph
-    #df = df.groupby(pd.cut(df["price"], np.arange(0, 1, 0.1))).sum()
-    #fig = px.area(df, x="month", y="price", color="country")
-    #graph5 = plotly.io.to_html(fig)
-    df['month'] = pd.Categorical(df['month'], categories=months, ordered=True)
+    athena_response = athenaRequest('SELECT AVG(NULLIF("avg_price", 0) ) as price,"city","month" FROM "dataframe_parquet" GROUP BY "city","month"')
+    df3 = pd.DataFrame(results_to_df(athena_response))
+    df3['month'] = pd.Categorical(df3['month'], categories=months, ordered=True)
+    df3["price"] = pd.to_numeric(df3["price"])
     fig = go.Figure()
-    subdf = df.loc[df['country'] == df["country"].unique()[0]]
+    subdf = df3.loc[df3['city'] == df3["city"].unique()[0]]
     subdf = subdf.sort_values(by="month")
-    fig.add_trace(go.Scatter(x=months, y=subdf["price"], fill='tonexty',name=df["country"].unique()[0])) # fill down to xaxis
-    for country in df["country"].unique()[1:]:
-        subdf = df.loc[df['country'] == country]
+    fig.add_trace(go.Scatter(x=months, y=subdf["price"], fill='tonexty',name=df3["city"].unique()[0])) # fill down to xaxis
+    for city in df3["city"].unique()[1:]:
+        subdf = df3.loc[df3['city'] == city]
         subdf = subdf.sort_values(by="month")
-        fig.add_trace(go.Scatter(x=months, y=subdf["price"], fill='tonexty',name=country)) # fill to trace0 y
+        fig.add_trace(go.Scatter(x=months, y=subdf["price"], fill='tonexty',name=city)) # fill to trace0 y
     graph5 = plotly.io.to_html(fig)
     
     
